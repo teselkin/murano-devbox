@@ -13,4 +13,6 @@ export MURANO_REPO=https://github.com/stackforge/murano
 export MURANO_DASHBOARD_REPO=https://github.com/stackforge/murano-dashboard
 export MURANO_APPS_REPO=https://github.com/murano-project/murano-app-incubator
 
+./manage-devbox.sh install
 ./manage-devbox.sh configure
+./manage-devbox.sh start

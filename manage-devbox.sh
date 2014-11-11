@@ -182,7 +182,8 @@ function prepare_devbox {
         libpq-dev \
         libxml2-dev \
         libxslt1-dev \
-        libffi-dev
+        libffi-dev \
+        screen
 
     # Install other prereqisites
     sudo apt-get --yes install \
@@ -285,6 +286,8 @@ function configure_murano {
 
     # Configure Murano API URL
     iniset ${DEST}/murano/${MURANO_CONF} murano url "http://127.0.0.1:8082"
+
+    echo 'OPENSTACK_KEYSTONE_URL = "http://${KEYSTONE_AUTH_HOST}:5000/v2.0"' >> ${DEST}/murano-dashboard/muranodashboard/settings.py
 }
 
 function import_app {
