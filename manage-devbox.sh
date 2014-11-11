@@ -211,7 +211,6 @@ function prepare_devbox {
     rm -rf ${DEST}/murano/murano-dashboard/muranodashboard
 
     ${DEST}/murano-dashboard/update_setting.sh
-
 }
 
 function collect_static {
@@ -290,8 +289,10 @@ function configure_murano {
     # Configure Murano API URL
     iniset ${DEST}/murano/${MURANO_CONF} murano url "http://127.0.0.1:8082"
 
-    cp ${DEST}/murano-dashboard/.tox/venv/local/lib/python2.7/site-packages/muranodashboard/local/local_settings.py.example ${DEST}/murano-dashboard/.tox/venv/local/lib/python2.7/site-packages/muranodashboard/local/local_settings.py
+    wget -O ${DEST}/murano-dashboard/.tox/venv/local/lib/python2.7/site-packages/muranodashboard/local/local_settings.py https://raw.githubusercontent.com/openstack/horizon/master/openstack_dashboard/local/local_settings.py.example
     sed -i 's/OPENSTACK_HOST = "127.0.0.1"/OPENSTACK_HOST = "${KEYSTONE_AUTH_HOST}"/g' ${DEST}/murano-dashboard/.tox/venv/local/lib/python2.7/site-packages/muranodashboard/local/local_settings.py
+
+    collect_static
 }
 
 function import_app {
