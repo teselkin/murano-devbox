@@ -190,9 +190,18 @@ function prepare_devbox {
         git \
         rabbitmq-server
 
+    # Install MySQL server
+    sudo debconf-set-selections <<< "mysql-server mysql-server/root_password password ${MYSQL_ROOT_PASSWORD}"
+    sudo debconf-set-selections <<< "mysql-server mysql-server/root_password_again password ${MYSQL_ROOT_PASSWORD}"
+    sudo apt-get -qq --yes install mysql-server
+
     # Enable rabbitmq_management plugin
     sudo /usr/lib/rabbitmq/bin/rabbitmq-plugins enable rabbitmq_management
     sudo service rabbitmq-server restart
+
+    mysqladmin -u root -p${MYSQL_ROOT_PASSWORD} drop murano
+    mysqladmin -u root -p${MYSQL_ROOT_PASSWORD} create murano
+    mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "GRANT ALL PRIVILEGES ON murano.* TO murano@localhost IDENTIFIED BY '${MYSQL_MURANO_PASSWORD}'" murano
 
     sudo pip install tox
 
@@ -208,9 +217,7 @@ function prepare_devbox {
     create_venv ${DEST}/murano
     create_venv ${DEST}/murano-dashboard
 
-    rm -rf ${DEST}/murano/murano-dashboard/muranodashboard
-
-    ${DEST}/murano-dashboard/update_setting.sh
+    ${DEST}/murano-dashboard/update_setting.sh -o=${DEST}/murano-dashboard/muranodashboard/settings.py
 }
 
 function collect_static {
@@ -281,7 +288,7 @@ function configure_murano {
     iniset ${DEST}/murano/${MURANO_CONF} DEFAULT notification_driver messagingv2
 
     # configure the database.
-    iniset ${DEST}/murano/${MURANO_CONF} database connection $MURANO_DATABASE_URL
+    iniset ${DEST}/murano/${MURANO_CONF} database connection "mysql://murano:${MYSQL_MURANO_PASSWORD}@localhost/murano"
 
     # Configure keystone auth url
     iniset ${DEST}/murano/${MURANO_CONF} keystone auth_url "http://${KEYSTONE_AUTH_HOST}:5000/v2.0"
@@ -289,8 +296,8 @@ function configure_murano {
     # Configure Murano API URL
     iniset ${DEST}/murano/${MURANO_CONF} murano url "http://127.0.0.1:8082"
 
-    wget -O ${DEST}/murano-dashboard/.tox/venv/local/lib/python2.7/site-packages/muranodashboard/local/local_settings.py https://raw.githubusercontent.com/openstack/horizon/master/openstack_dashboard/local/local_settings.py.example
-    sed -i 's/OPENSTACK_HOST = "127.0.0.1"/OPENSTACK_HOST = "${KEYSTONE_AUTH_HOST}"/g' ${DEST}/murano-dashboard/.tox/venv/local/lib/python2.7/site-packages/muranodashboard/local/local_settings.py
+    wget -O ${DEST}/murano-dashboard/muranodashboard/local/local_settings.py https://raw.githubusercontent.com/openstack/horizon/master/openstack_dashboard/local/local_settings.py.example
+    sed -i "s/OPENSTACK_HOST = \"127.0.0.1\"/OPENSTACK_HOST = \"${KEYSTONE_AUTH_HOST}\"/g" ${DEST}/murano-dashboard/muranodashboard/local/local_settings.py
 
     collect_static
 }
