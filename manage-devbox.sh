@@ -297,7 +297,7 @@ function configure_murano {
     # Configure Murano API URL
     iniset ${DEST}/murano/${MURANO_CONF} murano url "http://127.0.0.1:8082"
 
-    wget -O ${DEST}/murano-dashboard/muranodashboard/local/local_settings.py https://raw.githubusercontent.com/openstack/horizon/master/openstack_dashboard/local/local_settings.py.example
+    #wget -O ${DEST}/murano-dashboard/muranodashboard/local/local_settings.py https://raw.githubusercontent.com/openstack/horizon/master/openstack_dashboard/local/local_settings.py.example
     sed -i "s/OPENSTACK_HOST = \"127.0.0.1\"/OPENSTACK_HOST = \"${KEYSTONE_AUTH_HOST}\"/g" ${DEST}/murano-dashboard/muranodashboard/local/local_settings.py
 
     ${DEST}/murano-dashboard/update_setting.sh -o=${DEST}/murano-dashboard/muranodashboard/settings.py
