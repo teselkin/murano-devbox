@@ -199,7 +199,7 @@ function prepare_devbox {
     sudo /usr/lib/rabbitmq/bin/rabbitmq-plugins enable rabbitmq_management
     sudo service rabbitmq-server restart
 
-    mysqladmin -u root -p${MYSQL_ROOT_PASSWORD} drop murano
+    mysqladmin -u root -p${MYSQL_ROOT_PASSWORD} -f drop murano
     mysqladmin -u root -p${MYSQL_ROOT_PASSWORD} create murano
     mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "GRANT ALL PRIVILEGES ON murano.* TO murano@localhost IDENTIFIED BY '${MYSQL_MURANO_PASSWORD}'" murano
 
