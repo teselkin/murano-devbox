@@ -219,7 +219,6 @@ function prepare_devbox {
     create_venv ${DEST}/murano
     create_venv ${DEST}/murano-dashboard
 
-    ${DEST}/murano-dashboard/update_setting.sh -o=${DEST}/murano-dashboard/muranodashboard/settings.py
 }
 
 function collect_static {
@@ -300,6 +299,8 @@ function configure_murano {
 
     wget -O ${DEST}/murano-dashboard/muranodashboard/local/local_settings.py https://raw.githubusercontent.com/openstack/horizon/master/openstack_dashboard/local/local_settings.py.example
     sed -i "s/OPENSTACK_HOST = \"127.0.0.1\"/OPENSTACK_HOST = \"${KEYSTONE_AUTH_HOST}\"/g" ${DEST}/murano-dashboard/muranodashboard/local/local_settings.py
+
+    ${DEST}/murano-dashboard/update_setting.sh -o=${DEST}/murano-dashboard/muranodashboard/settings.py
 
     collect_static
 }
