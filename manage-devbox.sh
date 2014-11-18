@@ -211,33 +211,29 @@ function prepare_devbox {
     mkdir -p ${DEST}/status
 
     pushd ${DEST}
-    git clone ${MURANO_REPO}
-    popd
-    
-    pushd ${DEST}/murano
-    if [ -n "$MURANO_BRANCH" ]; then
-        git checkout ${MURANO_BRANCH}
-    fi
-    popd
+        git clone ${MURANO_REPO}
         
-    pushd ${DEST}
-    git clone ${MURANO_DASHBOARD_REPO}
-    popd
-    
-    pushd ${DEST}/murano-dasbboard
-    if [ -n "$MURANO_DASHBOARD_BRANCH" ]; then
-        git checkout ${MURANO_DASHBOARD_BRANCH}
-    fi
-    popd
+        pushd ${DEST}/murano
+        if [ -n "$MURANO_BRANCH" ]; then
+            git checkout ${MURANO_BRANCH}
+        fi
+        popd
         
-    pushd ${DEST}
-    git clone ${MURANO_APPS_REPO}
-    popd
-    
-    pushd ${DEST}/murano-app-incubator
-    if [ -n "$MURANO_APP_BRANCH" ]; then
-        git checkout ${MURANO_APP_BRANCH}
-    fi
+        git clone ${MURANO_DASHBOARD_REPO}
+        
+        pushd ${DEST}/murano-dasbboard
+        if [ -n "$MURANO_DASHBOARD_BRANCH" ]; then
+            git checkout ${MURANO_DASHBOARD_BRANCH}
+        fi
+        popd
+        
+        git clone ${MURANO_APPS_REPO}
+        
+        pushd ${DEST}/murano-app-incubator
+        if [ -n "$MURANO_APP_BRANCH" ]; then
+            git checkout ${MURANO_APP_BRANCH}
+        fi
+        popd
     popd
 
     create_venv ${DEST}/murano
