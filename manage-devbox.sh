@@ -25,7 +25,7 @@ MURANO_CONF=./etc/murano/murano.conf
 # Any non-empty string means 'true'
 WITH_VENV=${WITH_VENV:-''}
 
-set -o nounset
+#set -o nounset
 
 function screen_service {
     local service=$1
