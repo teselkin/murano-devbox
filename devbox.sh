@@ -13,6 +13,9 @@ export MYSQL_MURANO_PASSWORD=qwerty
 export MURANO_REPO=https://github.com/stackforge/murano
 export MURANO_DASHBOARD_REPO=https://github.com/stackforge/murano-dashboard
 export MURANO_APPS_REPO=https://github.com/murano-project/murano-app-incubator
+export MURANO_BRANCH=master
+export MURANO_DASHBOARD_BRANCH=master
+export MURANO_APP_BRANCH=master
 
 case $1 in
 	install)
