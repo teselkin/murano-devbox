@@ -1,21 +1,5 @@
 #!/bin/bash
-export RABBIT_HOST=127.0.0.1
-export RABBIT_PASSWORD=password
-export KEYSTONE_AUTH_HOST=127.0.0.1
-export KEYSTONE_AUTH_PORT=5000
-export KEYSTONE_AUTH_PROTOCOL=http
-export KEYSTONE_SSL_CA=keystone.ca
-export SERVICE_TENANT_NAME=murano
-export MURANO_ADMIN_USER=admin
-export SERVICE_PASSWORD=password
-export MYSQL_ROOT_PASSWORD=password
-export MYSQL_MURANO_PASSWORD=password
-export MURANO_REPO=https://github.com/stackforge/murano
-export MURANO_DASHBOARD_REPO=https://github.com/stackforge/murano-dashboard
-export MURANO_APPS_REPO=https://github.com/murano-project/murano-app-incubator
-export MURANO_BRANCH=master
-export MURANO_DASHBOARD_BRANCH=master
-export MURANO_APPS_BRANCH=master
+source ./devbox.vars
 
 case $1 in
   install-only)
@@ -36,11 +20,11 @@ case $1 in
   set)
     case $2 in
       RABBIT_HOST|RABBIT_PASSWORD|KEYSTONE_AUTH_HOST|KEYSTONE_SSL_CA|SERVICE_TENANT_NAME|MURANO_ADMIN_USER|SERVICE_PASSWORD|MYSQL_ROOT_PASSWORD|MYSQL_MURANO_PASSWORD)
-        sed -ir "s/^export $2=\(.*\)$/export $2=$3/g" $0;
+        sed -ir "s/^export $2=\(.*\)$/export $2=$3/g" ./devbox.vars;
       ;;
       KEYSTONE_AUTH_PORT|KEYSTONE_AUTH_PROTOCOL|MURANO_REPO|MURANO_DASHBOARD_REPO|MURANO_APPS_REPO|MURANO_BRANCH|MURANO_DASHBOARD_BRANCH|MURANO_APPS_BRANCH)
         if [ -n "$3" ];
-          then sed -ir "s/^export $2=\(.*\)$/export $2=$3/g" $0;
+          then sed -ir "s/^export $2=\(.*\)$/export $2=$3/g" ./devbox.vars;
         fi
       ;;
       *)
