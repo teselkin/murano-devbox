@@ -1,0 +1,34 @@
+packages:
+ - git
+
+users:
+  - default
+  - name: murano
+    gecos: Murano User
+    inactive: true
+    system: true
+
+bootcmd:
+ - [ cloud-init-per, once, sed -i, 's/#PermitRootLogin yes/PermitRootLogin no/g', /etc/ssh/sshd_config ]
+ - [ cloud-init-per, once, service, ssh, restart ]
+ - [ cloud-init-per, once, sudo, -i, -u, murano, git, clone, http://git.linachan.ru/mirantis-inc/murano-devbox.git ]
+
+ - [ cloud-init-per, once, sudo, -i, -u, murano, /home/murano/devbox.sh, set, RABBIT_HOST, 127.0.0.1 ]
+ - [ cloud-init-per, once, sudo, -i, -u, murano, /home/murano/devbox.sh, set, RABBIT_PASSWORD, password ]
+ - [ cloud-init-per, once, sudo, -i, -u, murano, /home/murano/devbox.sh, set, KEYSTONE_AUTH_HOST, 127.0.0.1 ]
+ - [ cloud-init-per, once, sudo, -i, -u, murano, /home/murano/devbox.sh, set, KEYSTONE_AUTH_PORT, 5000 ]
+ - [ cloud-init-per, once, sudo, -i, -u, murano, /home/murano/devbox.sh, set, KEYSTONE_AUTH_PROTOCOL, http ]
+ - [ cloud-init-per, once, sudo, -i, -u, murano, /home/murano/devbox.sh, set, KEYSTONE_SSL_CA, keystone.crt ]
+ - [ cloud-init-per, once, sudo, -i, -u, murano, /home/murano/devbox.sh, set, SERVICE_TENANT_NAME, murano ]
+ - [ cloud-init-per, once, sudo, -i, -u, murano, /home/murano/devbox.sh, set, MURANO_ADMIN_USER, admin ]
+ - [ cloud-init-per, once, sudo, -i, -u, murano, /home/murano/devbox.sh, set, SERVICE_PASSWORD, password ]
+ - [ cloud-init-per, once, sudo, -i, -u, murano, /home/murano/devbox.sh, set, MYSQL_ROOT_PASSWORD, password ]
+ - [ cloud-init-per, once, sudo, -i, -u, murano, /home/murano/devbox.sh, set, MYSQL_MURANO_PASSWORD, password ]
+ - [ cloud-init-per, once, sudo, -i, -u, murano, /home/murano/devbox.sh, set, MURANO_REPO, https://github.com/stackforge/murano ]
+ - [ cloud-init-per, once, sudo, -i, -u, murano, /home/murano/devbox.sh, set, MURANO_DASHBOARD_REPO, https://github.com/stackforge/murano-dashboard ]
+ - [ cloud-init-per, once, sudo, -i, -u, murano, /home/murano/devbox.sh, set, MURANO_APPS_REPO, https://github.com/murano-project/murano-app-incubator ]
+ - [ cloud-init-per, once, sudo, -i, -u, murano, /home/murano/devbox.sh, set, MURANO_BRANCH, master ]
+ - [ cloud-init-per, once, sudo, -i, -u, murano, /home/murano/devbox.sh, set, MURANO_DASHBOARD_BRANCH, master ]
+ - [ cloud-init-per, once, sudo, -i, -u, murano, /home/murano/devbox.sh, set, MURANO_APPS_BRANCH, master ]
+
+ - [ cloud-init-per, once, sudo, -i, -u, murano, /home/murano/devbox.sh, install ]

@@ -230,8 +230,8 @@ function prepare_devbox {
         git clone ${MURANO_APPS_REPO}
         
         pushd ${DEST}/murano-app-incubator
-        if [ -n "$MURANO_APP_BRANCH" ]; then
-            git checkout ${MURANO_APP_BRANCH}
+        if [ -n "$MURANO_APPS_BRANCH" ]; then
+            git checkout ${MURANO_APPS_BRANCH}
         fi
         popd
     popd
