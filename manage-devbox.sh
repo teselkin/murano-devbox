@@ -20,12 +20,17 @@ DEST=$TOP_DIR/murano
 SCREEN_LOGDIR=$DEST/logs
 CURRENT_LOG_TIME=$(TZ=Europe/Moscow date +"%Y-%m-%d-%H%M%S")
 
+DEVBOX_VARS=./devbox.vars
 MURANO_CONF=./etc/murano/murano.conf
 
 # Any non-empty string means 'true'
 WITH_VENV=${WITH_VENV:-''}
 
 #set -o nounset
+
+if [ -f ${DEVBOX_VARS} ]; then
+    source ${DEVBOX_VARS}
+fi
 
 function screen_service {
     local service=$1
@@ -172,7 +177,7 @@ function create_venv {
 }
 
 
-function prepare_devbox {
+function install_components {
     sudo apt-get update
     sudo apt-get --yes upgrade
 
@@ -349,6 +354,24 @@ EOF
 #    tox -e venv -- python ./manage.py syncdb
     tox -e venv -- python manage.py collectstatic --noinput
     popd
+
+    patch_horizon_admin_url
+}
+
+function patch_horizon_admin_url {
+    cat << EOF > patch -d ${DEST}/murano-dashboard/.tox/venv/lib/python2.7/site-packages/openstack_dashboard/api
+--- keystone.py    2015-02-19 16:14:28.468907999 +0000
++++ keystone.py    2015-02-19 14:50:24.084907999 +0000
+@@ -146,7 +146,7 @@
+     if admin:
+         if not policy.check((("identity", "admin_required"),), request):
+             raise exceptions.NotAuthorized
+-        endpoint_type = 'adminURL'
++        endpoint_type = 'publicURL'
+     else:
+         endpoint_type = getattr(settings,
+                                 'OPENSTACK_ENDPOINT_TYPE',
+EOF
 }
 
 function import_app {
@@ -394,6 +417,31 @@ function import_from {
     fi
 }
 
+function do_dbsync {
+    rm ${DEST}/murano/murano.sqlite
+    pushd ${DEST}/murano
+    if [[ "${WITH_VENV}" ]]; then
+        source .tox/venv/bin/activate
+        murano-db-manage --config-file ${MURANO_CONF} upgrade
+        deactivate
+    else
+        tox -e venv -- murano-db-manage --config-file ${MURANO_CONF} upgrade
+    fi
+    popd
+}
+
+function do_dbinit {
+    pushd ${DEST}/murano
+    if [[ "${WITH_VENV}" ]]; then
+        source .tox/venv/bin/activate
+        murano-manage --config-file ${MURANO_CONF} import-package ./meta/io.murano --update
+        deactivate
+    else
+        tox -e venv -- murano-manage --config-file ${MURANO_CONF} import-package ./meta/io.murano --update
+    fi
+    popd
+}
+
 function show_help {
     cat << EOF | less
 
@@ -427,11 +475,11 @@ COMMANDS
     import <path[ path2[ path3[...]]]>
         Import Murano Applications from <path>.
 
-    import-app-incubator
-        Import all packages from murano-app-incubator directory.
-
     import-from
         Import all packages from a directory.
+
+    setup
+        Install, configure and initialize Murano.
 EOF
 }
 
@@ -473,30 +521,13 @@ case $1 in
         fi
     ;;
     'dbsync')
-        rm ${DEST}/murano/murano.sqlite
-        pushd ${DEST}/murano
-        if [[ "${WITH_VENV}" ]]; then
-            source .tox/venv/bin/activate
-            murano-db-manage --config-file ${MURANO_CONF} upgrade
-            deactivate
-        else
-            tox -e venv -- murano-db-manage --config-file ${MURANO_CONF} upgrade
-        fi
-        popd
+        do_dbsync
     ;;
     'dbinit')
-        pushd ${DEST}/murano
-        if [[ "${WITH_VENV}" ]]; then
-            source .tox/venv/bin/activate
-            murano-manage --config-file ${MURANO_CONF} import-package ./meta/io.murano --update
-            deactivate
-        else
-            tox -e venv -- murano-manage --config-file ${MURANO_CONF} import-package ./meta/io.murano --update
-        fi
-        popd
+        do_dbinit
     ;;
     'install')
-        prepare_devbox
+        install_components
     ;;
     'configure')
         configure_murano
@@ -509,14 +540,15 @@ case $1 in
             shift
         done
     ;;
-    'import-app-incubator')
-        if [ ! -d ${DEST}/murano-app-incubator ]; then
-            git clone https://github.com/murano-project/murano-app-incubator ${DEST}/murano-app-incubator
-        fi
-        import_from ${DEST}/murano-app-incubator
-    ;;
     'import-from')
         import_from ${2}
+    ;;
+    'setup')
+        install_components
+        configure_murano
+        configure_murano_dashboard
+        do_dbsync
+        do_dbinit
     ;;
     *)
         show_help
