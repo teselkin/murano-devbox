@@ -8,6 +8,8 @@ case $1 in
 	install)
 		./manage-devbox.sh install
 		./manage-devbox.sh configure
+		./manage-devbox.sh dbsync
+		./manage-devbox.sh dbinit
 		./manage-devbox.sh start
 	;;
 	configure)
