@@ -197,6 +197,8 @@ function prepare_devbox {
     sudo debconf-set-selections <<< "mysql-server mysql-server/root_password_again password ${MYSQL_ROOT_PASSWORD}"
     sudo apt-get -qq --yes install mysql-server
 
+    # Change RabbitMQ 'guest' password
+    sudo rabbitmqctl change_password guest ${RABBIT_PASSWORD}
     # Enable rabbitmq_management plugin
     sudo /usr/lib/rabbitmq/bin/rabbitmq-plugins enable rabbitmq_management
     sudo service rabbitmq-server restart
@@ -294,6 +296,9 @@ function configure_murano {
 
     iniset ${DEST}/murano/${MURANO_CONF} DEFAULT debug true
     iniset ${DEST}/murano/${MURANO_CONF} DEFAULT use_syslog false
+    iniset ${DEST}/murano/${MURANO_CONF} DEFAULT rabbit_password $RABBIT_PASSWORD
+    # Configure notifications for status information during provisioning
+    iniset ${DEST}/murano/${MURANO_CONF} DEFAULT notification_driver messagingv2
 
     iniset ${DEST}/murano/${MURANO_CONF} rabbitmq host $RABBIT_HOST
     iniset ${DEST}/murano/${MURANO_CONF} rabbitmq password $RABBIT_PASSWORD
@@ -308,9 +313,6 @@ function configure_murano {
     iniset ${DEST}/murano/${MURANO_CONF} keystone_authtoken admin_user $MURANO_ADMIN_USER
     iniset ${DEST}/murano/${MURANO_CONF} keystone_authtoken admin_password $SERVICE_PASSWORD
 
-    # Configure notifications for status information during provisioning
-    iniset ${DEST}/murano/${MURANO_CONF} DEFAULT notification_driver messagingv2
-
     # configure the database.
     iniset ${DEST}/murano/${MURANO_CONF} database connection "mysql://murano:${MYSQL_MURANO_PASSWORD}@localhost/murano"
 
@@ -319,8 +321,6 @@ function configure_murano {
 
     # Configure Murano API URL
     iniset ${DEST}/murano/${MURANO_CONF} murano url "http://127.0.0.1:8082"
-
-    configure_murano_dashboard
 }
 
 function configure_murano_dashboard {
@@ -347,6 +347,7 @@ EOF
     pushd ${DEST}/murano-dashboard
     ./prepare_murano.sh --openstack-dashboard .tox/venv/lib/python2.7/site-packages/openstack_dashboard
 #    tox -e venv -- python ./manage.py syncdb
+    tox -e venv -- python manage.py collectstatic --noinput
     popd
 }
 
@@ -382,6 +383,16 @@ function import_app {
     fi
 }
 
+function import_from {
+    local path=${1}
+    if [ -d ${path} ]; then
+        for app in $(find ${path} -type d -maxdepth 1); do
+            import_app "${app}"
+        done
+    else
+        echo "Directory not found '${path}'"
+    fi
+}
 
 function show_help {
     cat << EOF | less
@@ -416,8 +427,11 @@ COMMANDS
     import <path[ path2[ path3[...]]]>
         Import Murano Applications from <path>.
 
-    importall
+    import-app-incubator
         Import all packages from murano-app-incubator directory.
+
+    import-from
+        Import all packages from a directory.
 EOF
 }
 
@@ -486,6 +500,7 @@ case $1 in
     ;;
     'configure')
         configure_murano
+        configure_murano_dashboard
     ;;
     'import')
         shift
@@ -494,10 +509,14 @@ case $1 in
             shift
         done
     ;;
-    'importall')
-        for app in $(find ${DEST}/murano-app-incubator -type d -maxdepth 1); do
-            import_app "${app}"
-        done
+    'import-app-incubator')
+        if [ ! -d ${DEST}/murano-app-incubator ]; then
+            git clone https://github.com/murano-project/murano-app-incubator ${DEST}/murano-app-incubator
+        fi
+        import_from ${DEST}/murano-app-incubator
+    ;;
+    'import-from')
+        import_from ${2}
     ;;
     *)
         show_help
