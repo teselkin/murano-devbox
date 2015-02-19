@@ -239,6 +239,9 @@ function prepare_devbox {
     create_venv ${DEST}/murano
     create_venv ${DEST}/murano-dashboard
 
+    pushd ${DEST}/murano
+    tox -e venv -- oslo-config-generator --config-file etc/oslo-config-generator/murano.conf
+    popd
 }
 
 function collect_static {
@@ -317,12 +320,34 @@ function configure_murano {
     # Configure Murano API URL
     iniset ${DEST}/murano/${MURANO_CONF} murano url "http://127.0.0.1:8082"
 
-    wget -O ${DEST}/murano-dashboard/muranodashboard/local/local_settings.py https://raw.githubusercontent.com/openstack/horizon/master/openstack_dashboard/local/local_settings.py.example
-    sed -i "s/OPENSTACK_HOST = \"127.0.0.1\"/OPENSTACK_HOST = \"${KEYSTONE_AUTH_HOST}\"/g" ${DEST}/murano-dashboard/muranodashboard/local/local_settings.py
+    configure_murano_dashboard
+}
 
-    ${DEST}/murano-dashboard/update_setting.sh -o=${DEST}/murano-dashboard/muranodashboard/settings.py
+function configure_murano_dashboard {
+    pushd ${DEST}/murano-dashboard/muranodashboard/local
 
-    collect_static
+    cp local_settings.py.example local_settings.py
+    sed -i "s/OPENSTACK_HOST = \"127.0.0.1\"/OPENSTACK_HOST = \"${KEYSTONE_AUTH_HOST}\"/g" ./local_settings.py
+
+    cat << EOF >> ./local_settings.py
+
+
+#DATABASES = {
+#    'default': {
+#    'ENGINE': 'django.db.backends.sqlite3',
+#    'NAME': '/tmp/murano-dashboard.sqlite',
+#    }
+#}
+#SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
+MURANO_API_URL = 'http://${DEVBOX_IP}:8082'
+EOF
+    popd
+
+    pushd ${DEST}/murano-dashboard
+    ./prepare_murano.sh --openstack-dashboard .tox/venv/lib/python2.7/site-packages/openstack_dashboard
+#    tox -e venv -- python ./manage.py syncdb
+    popd
 }
 
 function import_app {
